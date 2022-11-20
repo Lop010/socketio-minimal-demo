@@ -1,36 +1,39 @@
+function startserver() {
+    turtleserveron = false
 
-const http = require('http').createServer();
+    const WebSocket = require('ws')
 
-const io = require('socket.io')(http, {
-    cors: { origin: "*" }
-});
+    const server = new WebSocket.Server({ port: '8080' })
+    
 
-io.on('connection', (socket) => {
-    console.log('a user connected');
+    console.log('listening on http://localhost:8080')
 
-    socket.on('message', (message) =>     {
-        console.log(message);
-        io.emit('message', `${socket.id.substr(0,2)} said ${message}` );   
-    });
-});
+    server.on('connection', socket => { 
+        console.log("User Connected")
 
-http.listen(8080, () => console.log('listening on http://localhost:8080') );
+        socket.on('message', message => {
+            if (message == "id") {
+                console.log("Haha silly turtle")
+            }
+            else {
+                console.log("Message Recieved: ", message)
+                
+                server.broadcast = function broadcast(msg) {
+                    server.clients.forEach(function each(client) {
+                        client.send(msg);
+                    });
+                };
 
+                server.broadcast(message)
+                if (message == "inspect") {
+                    socket.on('message', message => {
+                        server.broadcast(message)
+                    })
+                }                
+            }
 
-// Regular Websockets
+            });
+  });
 
-// const WebSocket = require('ws')
-// const server = new WebSocket.Server({ port: '8080' })
-
-// server.on('connection', socket => { 
-
-//   socket.on('message', message => {
-
-//     socket.send(`Roger that! ${message}`);
-
-//   });
-
-// });
-
-
- 
+ };
+startserver()
